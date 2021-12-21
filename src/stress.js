@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { System } from 'detect-collisions';
+import { fabric } from "fabric";
 
 function random(min, max) {
   return Math.floor(Math.random() * max) + min;
@@ -7,17 +8,17 @@ function random(min, max) {
 
 const width = 1000;
 const height = 500;
-const count = 500;
+const count = 100;
 const speed = 1;
 const size = 5;
 
 let frame = 0;
 let fps_total = 0;
-
 class Stress {
   constructor(element, canvas) {
     this.element = element;
     this.canvas = canvas;
+    this.fabric = new fabric.Canvas(this.canvas);
     this.context = this.canvas.getContext("2d");
     this.collisions = new System();
     this.bodies = [];
@@ -51,6 +52,12 @@ class Stress {
     for (let i = 0; i < count; ++i) {
       this.createShape(!random(0, 49));
     }
+    this.fabric.renderAll()
+
+    this.context.strokeStyle = "#F00";
+    this.context.beginPath();
+    this.collisions.draw(this.context);
+    this.context.stroke();
 
     this.element.innerHTML = `
       <div><b>Total:</b> ${count}</div>
@@ -96,8 +103,10 @@ class Stress {
     }
 
     this.bodies.forEach((body) => {
-      body.pos.x += body.direction_x * speed;
-      body.pos.y += body.direction_y * speed;
+      body.collisions.pos.x += body.direction_x * speed;
+      body.collisions.pos.y += body.direction_y * speed;
+      body.fabric.left += body.direction_x * speed;
+      body.fabric.top += body.direction_y * speed;
     });
 
     this.collisions.update();
@@ -107,23 +116,30 @@ class Stress {
       }
 
       const direction = (random(0, 360) * Math.PI) / 180;
+      const body = this.bodies.find(b => b.collisions === a)
 
       a.pos.x -= overlapV.x;
       a.pos.y -= overlapV.y;
 
-      a.direction_x = Math.cos(direction);
-      a.direction_y = Math.sin(direction);
+      body.fabric.left -= overlapV.x;
+      body.fabric.top -= overlapV.y;
+
+      body.direction_x = Math.cos(direction);
+      body.direction_y = Math.sin(direction);
+
     });
 
     // Clear the canvas
     this.context.fillStyle = "#000000";
     this.context.fillRect(0, 0, width, height);
 
-    // Render the bodies
-    this.context.strokeStyle = "#FFFFFF";
-    this.context.beginPath();
-    this.collisions.draw(this.context);
-    this.context.stroke();
+    this.fabric.renderAll()
+
+    // Disable Render the bodies
+    // this.context.strokeStyle = "#F00";
+    // this.context.beginPath();
+    // this.collisions.draw(this.context);
+    // this.context.stroke();
 
     // Render the BVH
     if (this.bvh_checkbox.checked) {
@@ -139,35 +155,61 @@ class Stress {
   }
 
   createShape(large) {
-    const min_size = size * 0.75 * (large ? 3 : 1);
+    const min_size = size * 0.5 * (large ? 3 : 1);
     const max_size = size * 1.25 * (large ? 5 : 1);
     const x = random(0, width);
     const y = random(0, height);
     const direction = (random(0, 360) * Math.PI) / 180;
 
     let body;
+    let c1;
+    let c2;
 
     if (random(0, 2)) {
-      body = this.collisions.createCircle({ x, y }, random(min_size, max_size));
+      const radius = random(min_size, max_size)
+      c1 = this.collisions.createCircle({ x, y }, radius);
+      c2 = new fabric.Circle({
+        left: x,
+        top: y,
+        radius,
+        originX: 'center',
+        originY: 'center'
+      })
 
       ++this.circles;
     } else {
-      body = this.collisions.createPolygon(
+      const points = [
+        { x: -random(min_size, max_size), y: -random(min_size, max_size) },
+        { x: random(min_size, max_size), y: -random(min_size, max_size) },
+        { x: random(min_size, max_size), y: random(min_size, max_size) },
+        { x: -random(min_size, max_size), y: random(3, size) },
+      ]
+      c1 = this.collisions.createPolygon(
         {
           x,
           y,
         },
-        [
-          { x: -random(min_size, max_size), y: -random(min_size, max_size) },
-          { x: random(min_size, max_size), y: -random(min_size, max_size) },
-          { x: random(min_size, max_size), y: random(min_size, max_size) },
-          { x: -random(min_size, max_size), y: random(3, size) },
-        ],
-        (random(0, 360) * Math.PI) / 180
+        points,
       );
+
+      c2 = new fabric.Polygon(
+        points, {
+        stroke: 'white',
+        left: x,
+        top: y,
+        originX: 'center',
+        originY: 'center'
+      })
 
       ++this.polygons;
     }
+
+    body = {
+      collisions: c1,
+      fabric: c2
+    }
+
+    this.fabric.add(c2)
 
     body.direction_x = Math.cos(direction);
     body.direction_y = Math.sin(direction);
@@ -187,7 +229,7 @@ const StressTest = () => {
 
   return (
     <div ref={divRef}>
-      <canvas ref={canvasRef}></canvas>
+      <canvas id="c" ref={canvasRef} width={1000} height={500} style={{marginTop: '100px', marginLeft: '100px'}}></canvas>
     </div>
   )
 }
