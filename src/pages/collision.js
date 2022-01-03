@@ -1,453 +1,216 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { System } from 'detect-collisions';
-
+import React, { useEffect } from "react";
 import { fabric } from "fabric";
+import _ from "lodash";
+import polygonData from "./polygon-data.json";
 
-const width = 1000;
-const height = 500;
+const GRID_W = 3;
+const GRID_H = 3;
 
-const polygonsPoints = [
-  {
-    points: [
-      {
-        "x": -50.24731233,
-        "y": 23.15201165
-      },
-      {
-        "x": -29.46402287,
-        "y": 2.34225007
-      },
-      {
-        "x": 29.46402287,
-        "y": 2.34225007
-      },
-      {
-        "x": 50.24731233,
-        "y": 23.15201165
-      },
-      {
-        "x": 68.29000767,
-        "y": 5.13226835
-      },
-      {
-        "x": 40.03597713,
-        "y": -23.15775007
-      },
-      {
-        "x": -40.03597713,
-        "y": -23.15775007
-      },
-      {
-        "x": -68.29000767,
-        "y": 5.13226835
-      }
-    ]
-  },
-  {
-    points: [
-      {
-        "x": -45,
-        "y": 40.75
-      },
-      {
-        "x": -45.00000002,
-        "y": -15.25000002
-      },
-      {
-        "x": 44.00000002,
-        "y": -15.25000002
-      },
-      {
-        "x": 44,
-        "y": 40.75
-      },
-      {
-        "x": 69.5,
-        "y": 40.75
-      },
-      {
-        "x": 69.49999998,
-        "y": -40.74999998
-      },
-      {
-        "x": -70.49999998,
-        "y": -40.74999998
-      },
-      {
-        "x": -70.5,
-        "y": 40.75
-      }
-    ]
-  },
-  {
-    points: [
-      {
-        "x": -12,
-        "y": 16.5
-      },
-      {
-        "x": -22.50000002,
-        "y": 16.50000002
-      },
-      {
-        "x": -22.50000002,
-        "y": -16.50000002
-      },
-      {
-        "x": 22.50000002,
-        "y": -16.50000002
-      },
-      {
-        "x": 22.5,
-        "y": 42
-      },
-      {
-        "x": 48,
-        "y": 42
-      },
-      {
-        "x": 47.99999998,
-        "y": -41.99999998
-      },
-      {
-        "x": -47.99999998,
-        "y": -41.99999998
-      },
-      {
-        "x": -47.99999998,
-        "y": 41.99999998
-      },
-      {
-        "x": -12,
-        "y": 42
-      }
-    ]
-  },
-  {
-    points: [
-      {
-        "x": -48.17834047,
-        "y": 30.22517196
-      },
-      {
-        "x": -13.25256233,
-        "y": -4.72880996
-      },
-      {
-        "x": 66.2132,
-        "y": -4.72881
-      },
-      {
-        "x": 66.2132,
-        "y": -30.22881
-      },
-      {
-        "x": -23.82103767,
-        "y": -30.22881004
-      },
-      {
-        "x": -66.21683953,
-        "y": 12.20122804
-      }
-    ]
-  },
-  {
-    points: [
-      {
-        "x": 55.98768968,
-        "y": 35.50852722
-      },
-      {
-        "x": 55.98768966,
-        "y": -61.2414765
-      },
-      {
-        "x": -144.75003992,
-        "y": -61.2414765
-      },
-      {
-        "x": -144.75003992,
-        "y": 63.75852778
-      },
-      {
-        "x": -52.25438535,
-        "y": 63.75852778
-      },
-      {
-        "x": -52.25438535,
-        "y": 3.25852526
-      },
-      {
-        "x": -10.00921154,
-        "y": 3.25852526
-      },
-      {
-        "x": -10.00921156,
-        "y": 51.75852783
-      },
-      {
-        "x": 15.49078844,
-        "y": 51.75852783
-      },
-      {
-        "x": 15.49078842,
-        "y": -22.2414747
-      },
-      {
-        "x": -77.75438531,
-        "y": -22.2414747
-      },
-      {
-        "x": -77.75438531,
-        "y": 38.25852782
-      },
-      {
-        "x": -119.25003996,
-        "y": 38.25852782
-      },
-      {
-        "x": -119.25003996,
-        "y": -35.74147654
-      },
-      {
-        "x": 30.4876897,
-        "y": -35.74147654
-      },
-      {
-        "x": 30.48768968,
-        "y": 35.50852722
-      }
-    ]
-  },
-  {
-    points: [
-      {
-        "x": -73.75100418,
-        "y": 33.50852713
-      },
-      {
-        "x": -73.7510042,
-        "y": -37.99147664
-      },
-      {
-        "x": -35.50678027,
-        "y": -37.99147664
-      },
-      {
-        "x": -35.50678027,
-        "y": 52.50852726
-      },
-      {
-        "x": 69.48566082,
-        "y": 52.50852726
-      },
-      {
-        "x": 69.48566084,
-        "y": -53.99147677
-      },
-      {
-        "x": 43.98566084,
-        "y": -53.99147677
-      },
-      {
-        "x": 43.98566086,
-        "y": 27.0085273
-      },
-      {
-        "x": -10.00678031,
-        "y": 27.0085273
-      },
-      {
-        "x": -10.00678031,
-        "y": -63.4914766
-      },
-      {
-        "x": -99.25100416,
-        "y": -63.4914766
-      },
-      {
-        "x": -99.25100418,
-        "y": 33.50852713
-      }
-    ]
-  },
-]
+const CANVAS_W = 1000;
+const CANVAS_H = 500;
+const borderLines = [
+  { x1: 0, y1: 0, x2: CANVAS_W, y2: 0 },
+  { x1: 0, y1: CANVAS_H, x2: CANVAS_W, y2: CANVAS_H },
+  { x1: 0, y1: 0, x2: 0, y2: CANVAS_H },
+  { x1: CANVAS_W, y1: 0, x2: CANVAS_W, y2: CANVAS_H },
+];
 
-const CanvasComponent = () => {
-  const divRef = useRef()
-  const canvasRef = useRef()
-  const [collisions, setCollisions] = useState();
-  const [bodies, setBodies] = useState([]);
-  const [polygons, setPolygons] = useState(0);
-  const [count, setCount] = useState(1)
+let fabricCanvas;
+let polygons = [];
 
-  const fabricCanvas = useRef()
-  const context = useRef()
-  const collisionSystem = useRef()
+function createPolygon(x, y, kind) {
+  return new fabric.Polygon(polygonData[kind].points, {
+    stroke: "blue",
+    left: x,
+    top: y,
+    originX: "center",
+    originY: "center",
+  });
+}
 
+function getLines(polygon) {
+  const points = polygon.points.map((p) => {
+    const x1 = p.x * (polygon.scaleX || 1);
+    const y1 = p.y * (polygon.scaleY || 1);
+    const cos = Math.cos((Math.PI / 180) * (polygon.angle || 0));
+    const sin = Math.sin((Math.PI / 180) * (polygon.angle || 0));
+    const x = polygon.left + cos * x1 - sin * y1;
+    const y = polygon.top + sin * x1 + cos * y1;
+    return { x, y };
+  });
 
-  // INIT
-  useEffect(() => {
-    fabricCanvas.current = new fabric.Canvas("my-fabric-canvas");
-    context.current = canvasRef.current.getContext("2d");
-    collisionSystem.current = new System();
-    setCollisions(collisionSystem.current);
-    canvasRef.current.width = width;
-    canvasRef.current.height = height;
-    context.current.font = "24px Arial";
-    const bounds = [
-      collisionSystem.current.createPolygon({ x: 0, y: 0 }, [
-        { x: 0, y: 0 },
-        { x: width, y: 0 },
-      ]),
-      collisionSystem.current.createPolygon({ x: 0, y: 0 }, [
-        { x: width, y: 0 },
-        { x: width, y: height },
-      ]),
-      collisionSystem.current.createPolygon({ x: 0, y: 0 }, [
-        { x: width, y: height },
-        { x: 0, y: height },
-      ]),
-      collisionSystem.current.createPolygon({ x: 0, y: 0 }, [
-        { x: 0, y: height },
-        { x: 0, y: 0 },
-      ]),
-    ];
-    const firstPolygonFabric = new fabric.Polygon(
-      polygonsPoints[0].points,
-      {
-        stroke: 'white',
-        left: 200,
-        top: 100,
-        originX: 'center',
-        originY: 'center'
-      });
-    const firstPolygonCollision = collisionSystem.current.createPolygon(
-      {
-        x: 200,
-        y: 100,
-      },
-      polygonsPoints[0].points,
-    );
-    fabricCanvas.current.add(firstPolygonFabric)
-    fabricCanvas.current.renderAll();
+  return points.map((p, i) => {
+    const p1 = points[(i + 1) % points.length];
+    return { x1: p.x, y1: p.y, x2: p1.x, y2: p1.y };
+  });
+}
 
-    context.current.strokeStyle = "#F00";
-    context.current.beginPath();
-    collisionSystem.current.draw(context.current);
-    context.current.stroke();
-
-  }, []);
-
-  useEffect(() => {
-    fabricCanvas.current.off('mouse:down');
-    fabricCanvas.current.on('mouse:down', handleMouseClick);
-  }, [count])
-
-  const handleMouseClick = (options) => {
-    if (options.target) {
-      return;
-    }
-    const index = count % polygonsPoints.length;
-    const newFabricPolygon = new fabric.Polygon(
-      polygonsPoints[index].points,
-      {
-        stroke: 'blue',
-        left: options.e.clientX,
-        top: options.e.clientY,
-        originX: 'center',
-        originY: 'center'
-      });
-    const aa = collisionSystem.current.createPolygon(
-      {
-        x: options.e.clientX,
-        y: options.e.clientY,
-      },
-      polygonsPoints[index].points,
-    );
-    console.log('---- options: ', options, aa);
-    const newCount = count + 1
-    setCount(newCount)
-    fabricCanvas.current.add(newFabricPolygon);
-    fabricCanvas.current.renderAll();
-    context.current.strokeStyle = "#F00";
-    context.current.beginPath();
-    collisionSystem.current.draw(context.current);
-    context.current.stroke();
-
-    collisionSystem.current.update();
-    let potentials = collisionSystem.current.getPotentials(aa)
-
-    let actualCollisions = 0
-    let totalLoop = 5
-    while (potentials.length > 0 && totalLoop > 0) {
-      potentials.forEach((collider) => {
-        if (collisionSystem.current.checkCollision(aa, collider)) {
-          // handleCollisions(system.response);
-          const { overlapV } = collisionSystem.current.response
-
-          aa.pos.x -= Math.floor(overlapV.x) - 1;
-          aa.pos.y -= Math.floor(overlapV.y) - 1;
-          console.log(aa)
-
-          newFabricPolygon.left -= overlapV.x;
-          newFabricPolygon.top -= overlapV.y;
-          actualCollisions++;
-
-          fabricCanvas.current.renderAll()
-        }
-      });
-      if (actualCollisions > 0) {
-        potentials = collisionSystem.current.getPotentials(aa);
-        actualCollisions = 0;
-        
-      } else {
-        fabricCanvas.current.renderAll()
-        break;
-      }
-      totalLoop--;
-    }
-
-    if(totalLoop === 0) {
-      let directionX = 10;
-      let directionY = 10;
-
-      while (aa.pos.y < height && potentials.length > 0) {
-        actualCollisions = 0;
-
-        potentials = collisionSystem.current.getPotentials(aa);
-        potentials.forEach((collider) => {
-          if (collisionSystem.current.checkCollision(aa, collider)) {
-            actualCollisions++;
-          }
-        });
-
-        if (actualCollisions === 0) {
-          break;
-        }
-
-        aa.pos.x += directionX;
-        newFabricPolygon.left += directionX;
-
-        
-        if (((aa.pos.x + aa.maxX / 2) > (width - directionX)) || (aa.pos.x < directionX)) {
-          directionX *= -1;
-          aa.pos.y += directionY;
-          newFabricPolygon.top += directionY;
-        }
-      }
-
-      fabricCanvas.current.renderAll()
-      collisionSystem.current.draw(context.current);
-      collisionSystem.current.update();
+function collideLines(l1, l2) {
+  var det, gamma, lambda;
+  det = (l1.x2 - l1.x1) * (l2.y2 - l2.y1) - (l2.x2 - l2.x1) * (l1.y2 - l1.y1);
+  if (det !== 0) {
+    lambda =
+      ((l2.y2 - l2.y1) * (l2.x2 - l1.x1) + (l2.x1 - l2.x2) * (l2.y2 - l1.y1)) /
+      det;
+    gamma =
+      ((l1.y1 - l1.y2) * (l2.x2 - l1.x1) + (l1.x2 - l1.x1) * (l2.y2 - l1.y1)) /
+      det;
+    if (0 < lambda && lambda < 1 && 0 < gamma && gamma < 1) {
+      return true;
     }
   }
+  return false;
+}
 
+function collidePolygons(p1, p2) {
+  const lines1 = getLines(p1);
+  const lines2 = [...getLines(p2), ...borderLines];
+  for (let i1 = 0, n1 = lines1.length; i1 < n1; i1++) {
+    for (let i2 = 0, n2 = lines2.length; i2 < n2; i2++) {
+      if (collideLines(lines1[i1], lines2[i2])) return true;
+    }
+  }
+  return false;
+}
 
+function isEmpty(data, index) {
+  return (
+    !data[4 * index] &&
+    !data[4 * index + 1] &&
+    !data[4 * index + 2] &&
+    !data[4 * index + 3]
+  );
+}
+
+function findPos(kind) {
+  const canvas = document.querySelector("#my-fabric-canvas");
+  const ctx = canvas.getContext("2d");
+  const gw = Math.floor(CANVAS_W / GRID_W) + 1;
+  const gh = Math.floor(CANVAS_H / GRID_H);
+  const pw = gw * GRID_W;
+  const ph = gh * GRID_H;
+  const data = ctx.getImageData(0, 0, pw, ph).data;
+  const canvasMap = [];
+  for (let j = 0; j < gh; j++) {
+    for (let i = 0; i < gw - 1; i++) {
+      canvasMap.push(
+        isEmpty(data, j * GRID_H * pw + i * GRID_W) &&
+          isEmpty(data, ((j + 1) * GRID_H - 1) * pw + i * GRID_W) &&
+          isEmpty(data, j * GRID_H * pw + (i + 1) * GRID_W - 1) &&
+          isEmpty(data, ((j + 1) * GRID_H - 1) * pw + (i + 1) * GRID_W - 1)
+          ? 0
+          : 1
+      );
+    }
+    canvasMap.push(1);
+  }
+  const canvasMapStr = canvasMap.join("");
+
+  // ========== get polygon map
+
+  const { points } = polygonData[kind];
+  const minX = _.minBy(points, "x").x;
+  const maxX = _.maxBy(points, "x").x;
+  const minY = _.minBy(points, "y").y;
+  const maxY = _.maxBy(points, "y").y;
+  const gw1 = gw;
+  const gh1 = Math.round((-minY + maxY) / GRID_H);
+  const pw1 = pw;
+  const ph1 = gh1 * GRID_H;
+
+  const canvas1 = document.createElement("canvas");
+  const fc = new fabric.Canvas(canvas1);
+  const p = createPolygon(-minX, -minY, kind);
+  fc.add(p);
+  fc.renderAll();
+
+  const ctx1 = canvas1.getContext("2d");
+  const data1 = ctx1.getImageData(0, 0, pw1, ph1).data;
+  const polygonMap = [];
+  for (let j = 0; j < gh1; j++) {
+    const flags = [];
+    for (let i = 0; i < gw1; i++) {
+      flags.push(
+        isEmpty(data1, j * GRID_H * pw1 + i * GRID_W) &&
+          isEmpty(data1, ((j + 1) * GRID_H - 1) * pw1 + i * GRID_W) &&
+          isEmpty(data1, j * GRID_H * pw1 + (i + 1) * GRID_W - 1) &&
+          isEmpty(data1, ((j + 1) * GRID_H - 1) * pw1 + (i + 1) * GRID_W - 1)
+          ? 0
+          : 1
+      );
+    }
+    polygonMap.push(flags.join(""));
+  }
+  const polygonMapStr = polygonMap.join("").replace(/0+$/, "");
+
+  const arr1 = polygonMapStr.match(/1+/g).map((str) => `0{${str.length}}`);
+  const arr0 = polygonMapStr.match(/0+/g).map((str) => `[01]{${str.length}}`);
+  let reg;
+  if (polygonMapStr[0] === "0") {
+    reg = arr0.map((str, i) => `${str}${arr1[i] || ""}`).join("");
+  } else {
+    reg = arr1.map((str, i) => `${str}${arr0[i] || ""}`).join("");
+  }
+  const regex = new RegExp(reg, "g");
+  if (regex.exec(canvasMapStr)) {
+    const index = regex.lastIndex - polygonMapStr.length;
+    const x = (index % gw) * GRID_W - minX;
+    const y = Math.floor(index / gw) * GRID_H - minY;
+    return { x, y };
+  }
+  return null;
+}
+
+const CanvasComponent = () => {
+  useEffect(() => {
+    fabricCanvas = new fabric.Canvas("my-fabric-canvas");
+
+    const handleMouseClick = (options) => {
+      if (options.target) return;
+
+      const kind = polygons.length % polygonData.length;
+      const newPolygon = createPolygon(
+        options.e.clientX,
+        options.e.clientY,
+        kind
+      );
+      const collisionPolygon = polygons.find((p) =>
+        collidePolygons(newPolygon, p)
+      );
+      if (!collisionPolygon) {
+        fabricCanvas.add(newPolygon);
+        fabricCanvas.renderAll();
+        polygons.push(newPolygon);
+      } else {
+        const pos = findPos(kind);
+        if (pos) {
+          const newPolygon = createPolygon(pos.x, pos.y, kind);
+          fabricCanvas.add(newPolygon);
+          fabricCanvas.renderAll();
+          polygons.push(newPolygon);
+        }
+      }
+    };
+
+    fabricCanvas.on("mouse:down", handleMouseClick);
+    const p = createPolygon(200, 200, 0);
+    fabricCanvas.add(p);
+    fabricCanvas.renderAll();
+    polygons = [p];
+
+    return () => {
+      fabricCanvas.off("mouse:down", handleMouseClick);
+    };
+  }, []);
 
   return (
-    <div ref={divRef} className="App" >
-      <canvas ref={canvasRef} id="my-fabric-canvas" width="1000" height="500" />
+    <div className="App">
+      <canvas
+        id="my-fabric-canvas"
+        width={CANVAS_W}
+        height={CANVAS_H}
+        style={{ border: "1px solid" }}
+      />
     </div>
   );
 };
